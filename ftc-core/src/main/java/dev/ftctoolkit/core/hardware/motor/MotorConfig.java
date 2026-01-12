@@ -46,7 +46,7 @@ public final class MotorConfig {
 
         // Default idle is do nothing
         private MotorIdleAction idleAction = motor -> {};
-        private long idleDelayMs = 150;
+        private long idleDelayMs = 2000;
         private boolean enableIdle = false;
 
 
@@ -117,7 +117,7 @@ public final class MotorConfig {
 
         /** Set time delay to start idle
          *
-         * @param delayMs delay amount in milliseconds. Default 150ms.
+         * @param delayMs delay amount in milliseconds. Default 2000ms.
          * @return Builder
          */
         public Builder idleDelayMs(long delayMs) {
