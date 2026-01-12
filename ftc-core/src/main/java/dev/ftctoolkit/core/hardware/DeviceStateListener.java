@@ -2,5 +2,5 @@ package dev.ftctoolkit.core.hardware;
 
 @FunctionalInterface
 public interface DeviceStateListener {
-    void onStateChanged(HardwareDevice<?> device, DeviceState from, DeviceState to);
+    void onStateChanged(FTCCoreHardwareDevice<?> device, DeviceState from, DeviceState to);
 }
