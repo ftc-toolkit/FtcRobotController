@@ -133,8 +133,12 @@ public final class MotorConfig {
             return new MotorConfig(this);
         }
 
-        private static double clamp(double v) {
-            return Math.max(-1.0, Math.min(1.0, v));
-        }
     }
+
+    /**
+     * Clamp a value to the configured power limits
+     * @param v the value to clamp
+     * @return the clamped value
+     */
+    public double clamp(double v) { return Math.max(minPower, Math.min(maxPower, v)); }
 }
