@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  * Subsystem interface that all subsystems should implement
  */
 
-public abstract class SubSystem {
+public abstract class SubSystemBase {
 
     /**
      * @param hardwareDevices map provided by FTC SDK

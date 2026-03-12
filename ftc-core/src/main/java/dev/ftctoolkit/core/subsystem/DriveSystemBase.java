@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
  * The template that all drive systems should use so they can easily be controlled by autonomous.
  */
 
-public abstract class DriveSystemTemplate extends SubSystem {
+public abstract class DriveSystemBase extends SubSystemBase {
     public abstract DcMotor[] getMotors();
 
     public abstract void driveTank(double leftPower, double rightPower);

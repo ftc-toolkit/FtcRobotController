@@ -2,14 +2,14 @@ package dev.ftctoolkit.core.subsystem;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-public abstract class SidedDriveSystemTemplate extends DriveSystemTemplate {
+public abstract class SidedDriveSystemBase extends DriveSystemBase {
     public abstract DcMotor[] getRightSideMotors();
 
     public abstract DcMotor[] getLeftSideMotors();
 
     @Override
     public DcMotor[] getMotors() {
-        return combine(getLeftSideMotors(),getRightSideMotors());
+        return combine(getLeftSideMotors(), getRightSideMotors());
     }
 
     public void setLeftSideTarget(int ticks) {
@@ -38,7 +38,7 @@ public abstract class SidedDriveSystemTemplate extends DriveSystemTemplate {
         }
     }
 
-    private static DcMotor[] combine(DcMotor[] a, DcMotor[] b){
+    private static DcMotor[] combine(DcMotor[] a, DcMotor[] b) {
         int length = a.length + b.length;
         DcMotor[] result = new DcMotor[length];
         System.arraycopy(a, 0, result, 0, a.length);

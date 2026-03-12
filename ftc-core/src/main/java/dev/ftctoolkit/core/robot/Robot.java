@@ -2,13 +2,13 @@ package dev.ftctoolkit.core.robot;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import dev.ftctoolkit.core.subsystem.DriveSystemTemplate;
-import dev.ftctoolkit.core.subsystem.SidedDriveSystemTemplate;
-import dev.ftctoolkit.core.subsystem.SubSystem;
 
 import java.util.Collection;
 import java.util.HashMap;
 
+import dev.ftctoolkit.core.subsystem.DriveSystemBase;
+import dev.ftctoolkit.core.subsystem.SidedDriveSystemBase;
+import dev.ftctoolkit.core.subsystem.SubSystemBase;
 
 
 /**
@@ -17,14 +17,9 @@ import java.util.HashMap;
  * Main robot class that should be extended by all robot configurations
  */
 
-public class RobotBase {
-    /**
-     * Try not to use the hardware map any more than you need it.
-     * If you do need it, it will do the job just fine
-     */
-    @Deprecated
+public abstract class Robot {
     public HardwareMap hardwareMap;
-    private HashMap<String, dev.ftctoolkit.core.subsystem.SubSystem> subSystems = new HashMap<>();
+    private HashMap<String, SubSystemBase> subSystems = new HashMap<>();
     private String driveSystem = "";
 
     private ElapsedTime time = new ElapsedTime();
@@ -33,52 +28,51 @@ public class RobotBase {
     /**
      * Adds subsystem to tracking by the internal system. This means it will receive all events and updates as needed.
      * It also will register the subsystem as the drive system if it uses that template. By default, the last subsystem added
-     * that extends {@link DriveSystemTemplate} is used as the drive system.
+     * that extends {@link DriveSystemBase} is used as the drive system.
      *
      * @param sub the subsystem to add to the robot
      */
-    protected void addSubSystem(SubSystem sub) {
+    protected void addSubSystem(SubSystemBase sub) {
         String subID = sub.ID().equals("") ? sub.getClass().getSimpleName() : sub.ID();
         //if the ID class hasn't been overridden, then use class name, else use the ID
         subSystems.put(subID, sub);
 
-        if (sub instanceof DriveSystemTemplate) {
+        if (sub instanceof DriveSystemBase) {
             driveSystem = subID;
         }
     }
 
-    public Collection<SubSystem> getSubSystems() {
+    public Collection<SubSystemBase> getSubSystems() {
         return subSystems.values();
     }
 
     /**
-     * Gets subsystem by name (This could be the class name or the overridden value of {@link SubSystem#ID()})
+     * Gets subsystem by name (This could be the class name or the overridden value of {@link SubSystemBase#ID()})
+     *
      * @param name name to find
      * @return the subsystem
      */
-    public SubSystem getSubSystem(String name) {
+    public SubSystemBase getSubSystem(String name) {
         return subSystems.get(name);
     }
 
     /**
-     *
-     * @return the subsystem the implements {@link DriveSystemTemplate} for use in driving the robot
+     * @return the subsystem the implements {@link DriveSystemBase} for use in driving the robot
      */
-    public DriveSystemTemplate getDriveSystem() {
+    public DriveSystemBase getDriveSystem() {
         if (!driveSystem.isEmpty()) {
-            return (DriveSystemTemplate) subSystems.get(driveSystem);
+            return (DriveSystemBase) subSystems.get(driveSystem);
         } else {
             return null;
         }
     }
 
     /**
-     *
-     * @return the subsystem the implements {@link DriveSystemTemplate} for use in driving the robot
+     * @return the subsystem the implements {@link DriveSystemBase} for use in driving the robot
      */
-    public SidedDriveSystemTemplate getSidedDriveSystem() {
-        if (!driveSystem.isEmpty() && subSystems.get(driveSystem) instanceof SidedDriveSystemTemplate) {
-            return (SidedDriveSystemTemplate) subSystems.get(driveSystem);
+    public SidedDriveSystemBase getSidedDriveSystem() {
+        if (!driveSystem.isEmpty() && subSystems.get(driveSystem) instanceof SidedDriveSystemBase) {
+            return (SidedDriveSystemBase) subSystems.get(driveSystem);
         } else {
             return null;
         }
@@ -92,7 +86,7 @@ public class RobotBase {
      */
     public boolean init(HardwareMap hardwareMap) {
         boolean noErrors = true;
-        for (SubSystem s : subSystems.values()) {
+        for (SubSystemBase s : subSystems.values()) {
             s.init(hardwareMap);//init each system
 
             if (!s.isFunctioning() || !s.isInitialized()) {//insure all systems are ready to go
@@ -108,7 +102,7 @@ public class RobotBase {
      * Called to stop all subsystems
      */
     public void stop() {
-        for (SubSystem s :
+        for (SubSystemBase s :
                 subSystems.values()) {
             s.stop();
         }
@@ -122,11 +116,11 @@ public class RobotBase {
      */
     public void tick() {
         //start time keeping
-        if(firstLoop){
+        if (firstLoop) {
             firstLoop = false;
             startTime();//start time keeping
         }
-        for (SubSystem s :
+        for (SubSystemBase s :
                 subSystems.values()) {
             s.tick();
         }
@@ -141,7 +135,6 @@ public class RobotBase {
     }
 
     /**
-     *
      * @return returns time since first call of {@code tick()} method for this robot
      */
     public long getTimeMilliseconds() {

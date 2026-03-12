@@ -2,143 +2,79 @@ package dev.ftctoolkit.core.hardware.motor;
 
 import dev.ftctoolkit.core.hardware.motor.enums.MotorZeroPowerBehavior;
 
-public final class MotorConfig {
 
-    // ===== Power limits =====
-    public final double minPower;
-    public final double maxPower;
+public final class MotorConfig extends SimpleMotorConfig {
+    // ================= DEFAULTS =================
+    public static final boolean DEFAULT_USE_ENCODER = true;
+    public static final MotorZeroPowerBehavior DEFAULT_ZERO_POWER_BEHAVIOR =
+            MotorZeroPowerBehavior.BRAKE;
+    public static final boolean DEFAULT_ENABLE_IDLE = false;
+    public static final long DEFAULT_IDLE_DELAY_MS = 2000;
+
 
     // ===== Behavior flags =====
-    public final boolean useEncoder;
-    public final boolean reversed;
+    public boolean useEncoder;
 
     // ===== Zero power behavior =====
-    public final MotorZeroPowerBehavior zeroPowerBehavior;
+    public MotorZeroPowerBehavior zeroPowerBehavior;
 
     // ===== Idle behavior =====
-    public final boolean enableIdle;
-    public final MotorIdleAction idleAction;
-    public final long idleDelayMs;
+    public boolean enableIdle;
+    public MotorIdleAction idleAction;
+    public long idleDelayMs;
 
-    private MotorConfig(Builder b) {
-        this.minPower = b.minPower;
-        this.maxPower = b.maxPower;
-        this.useEncoder = b.useEncoder;
-        this.reversed = b.reversed;
-        this.zeroPowerBehavior = b.zeroPowerBehavior;
-        this.idleAction = b.idleAction;
-        this.idleDelayMs = b.idleDelayMs;
-        this.enableIdle = b.enableIdle;
+    /** Default constructor for MotorConfig */
+    public MotorConfig() {
+        super();
+        this.useEncoder = DEFAULT_USE_ENCODER;
+        this.zeroPowerBehavior = DEFAULT_ZERO_POWER_BEHAVIOR;
+        this.enableIdle = DEFAULT_ENABLE_IDLE;
+        this.idleAction = (motor -> {});
+        this.idleDelayMs = DEFAULT_IDLE_DELAY_MS;
     }
 
-    // ================= BUILDER =================
-    /** Builder for MotorConfig */
-    public static class Builder {
-
-        private double minPower = -1.0;
-        private double maxPower = 1.0;
-
-        private boolean useEncoder = false;
-        private boolean reversed = false;
-
-        private MotorZeroPowerBehavior zeroPowerBehavior =
-                MotorZeroPowerBehavior.BRAKE;
-
-        // Default idle is do nothing
-        private MotorIdleAction idleAction = motor -> {};
-        private long idleDelayMs = 2000;
-        private boolean enableIdle = false;
-
-
-        /** Set power limits for the motor
-         *
-         * @param min the lower power limit for the motor. Default -1.0. min >= -1.0.
-         * @param max the upper power limit for the motor. Default 1.0. max <= 1.0.
-         * @return Builder
-         */
-        public Builder powerLimits(double min, double max) {
-            this.minPower = clamp(min);
-            this.maxPower = clamp(max);
-            if (this.minPower > this.maxPower) {
-                throw new IllegalArgumentException("minPower > maxPower");
-            }
-            return this;
-        }
-
-        /** Set whether to use encoder for the motor
-         *
-         * @param useEncoder true to use encoder, false otherwise
-         * @return Builder
-         */
-        public Builder useEncoder(boolean useEncoder) {
-            this.useEncoder = useEncoder;
-            return this;
-        }
-
-        /** Set whether to reverse the motor direction
-         *
-         * @param reversed true to reverse, false otherwise. Defaults false.
-         * @return Builder
-         */
-        public Builder reversed(boolean reversed) {
-            this.reversed = reversed;
-            return this;
-        }
-
-        /** Set zero power behavior for the motor
-         *
-         * @param behavior zero power behavior. Default is MotorZeroPowerBehavior.BRAKE.
-         * @return Builder
-         */
-        public Builder zeroPowerBehavior(MotorZeroPowerBehavior behavior) {
-            this.zeroPowerBehavior = (behavior != null) ? behavior : MotorZeroPowerBehavior.BRAKE;
-            return this;
-        }
-
-        /** Enable or disable idle behavior
-         *
-         * @param enable true to enable idle, false to disable. Default is false.
-         * @return Builder
-         */
-        public Builder enableIdle(boolean enable) {
-            this.enableIdle = enable;
-            return this;
-        }
-
-        /** Set the idle function callback
-         *
-         * @param action function to call on idle. Default is nothing.
-         * @return Builder
-         */
-        public Builder idleAction(MotorIdleAction action) {
-            this.idleAction = (action != null) ? action : (motor -> {});
-            return this;
-        }
-
-        /** Set time delay to start idle
-         *
-         * @param delayMs delay amount in milliseconds. Default 2000ms.
-         * @return Builder
-         */
-        public Builder idleDelayMs(long delayMs) {
-            this.idleDelayMs = Math.max(0, delayMs);
-            return this;
-        }
-
-        /** Creates a MotorConfig
-         *
-         * @return MotorConfig
-         */
-        public MotorConfig build() {
-            return new MotorConfig(this);
-        }
-
+    /** Reset all settings to defaults */
+    public void resetToDefaults() {
+        super.resetToDefaults();
+        this.useEncoder = DEFAULT_USE_ENCODER;
+        this.zeroPowerBehavior = DEFAULT_ZERO_POWER_BEHAVIOR;
+        this.enableIdle = DEFAULT_ENABLE_IDLE;
+        this.idleAction = (motor -> {});
+        this.idleDelayMs = DEFAULT_IDLE_DELAY_MS;
     }
 
-    /**
-     * Clamp a value to the configured power limits
-     * @param v the value to clamp
-     * @return the clamped value
-     */
-    public double clamp(double v) { return Math.max(minPower, Math.min(maxPower, v)); }
+    /** Enable or disable the use of encoders for this motor */
+    public void useEncoder(boolean useEncoder) {
+        this.useEncoder = useEncoder;
+    }
+
+    /** Set the zero power behavior for this motor */
+    public void setZeroPowerBehavior(MotorZeroPowerBehavior behavior) {
+        this.zeroPowerBehavior = (behavior != null) ? behavior : DEFAULT_ZERO_POWER_BEHAVIOR;
+    }
+
+    /** Enable or disable idle management for this motor */
+    public void setEnableIdle(boolean enableIdle) {
+        this.enableIdle = enableIdle;
+    }
+
+    /** Check if idle management is enabled for this motor */
+    public boolean getIsIdleEnabled() {
+        return this.enableIdle;
+    }
+
+    /** Set the action to perform when the motor is set to idle */
+    public void setIdleAction(MotorIdleAction action) {
+        this.idleAction = (action != null) ? action : (motor -> {});
+    }
+
+    /** Set the idle delay in milliseconds for this motor */
+    public void setIdleDelayMs(long delayMs) {
+        this.idleDelayMs = Math.max(0, delayMs);
+    }
+
+    /** Get the idle delay in milliseconds for this motor */
+    public long getIdleDelayMs() {
+        return this.idleDelayMs;
+    }
 }
