@@ -69,7 +69,6 @@ public final class FTCCoreMotor extends FTCCoreHardwareDevice<DcMotorEx> {
     public void setPower(double power) {
         device.setPower(config.clamp(power));
         markCommanded();
-        DcMotorEx
     }
 
     /**
@@ -94,7 +93,6 @@ public final class FTCCoreMotor extends FTCCoreHardwareDevice<DcMotorEx> {
     }
 
     public void setTargetRpm(double rpm) {
-//        device.set
         device.getMotorType().getTicksPerRev();
         double ticksPerSecond = (rpm / 60.0) * config.ticksPerRev;
         double power = ticksPerSecond / config.maxTicksPerSecond;
