@@ -21,7 +21,7 @@ public final class FTCCoreMotor extends FTCCoreHardwareDevice<DcMotorEx> {
      * @param deviceName the name of the motor device in the HardwareMap
      */
     public FTCCoreMotor(String deviceName) {
-        this(deviceName, new MotorConfig.Builder().build());
+        this(deviceName, new MotorConfig());
     }
 
     /**
@@ -94,8 +94,8 @@ public final class FTCCoreMotor extends FTCCoreHardwareDevice<DcMotorEx> {
     }
 
     public void setTargetRpm(double rpm) {
-        device.set
-        device.getMotorType().getTicksPerRev()
+//        device.set
+        device.getMotorType().getTicksPerRev();
         double ticksPerSecond = (rpm / 60.0) * config.ticksPerRev;
         double power = ticksPerSecond / config.maxTicksPerSecond;
         setPower(power);
