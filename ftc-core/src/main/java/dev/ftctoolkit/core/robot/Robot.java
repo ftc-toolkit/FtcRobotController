@@ -1,143 +1,149 @@
 package dev.ftctoolkit.core.robot;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import dev.ftctoolkit.core.subsystem.DriveSystemBase;
-import dev.ftctoolkit.core.subsystem.SidedDriveSystemBase;
-import dev.ftctoolkit.core.subsystem.SubSystemBase;
-
+import dev.ftctoolkit.core.subsystem.StatedSubsystem;
 
 /**
- * Created by Ethan Hampton on 8/19/17.
- * <p>
- * Main robot class that should be extended by all robot configurations
+ * Main robot container that owns and runs subsystem lifecycles.
  */
-
 public abstract class Robot {
-    public HardwareMap hardwareMap;
-    private HashMap<String, SubSystemBase> subSystems = new HashMap<>();
-    private String driveSystem = "";
 
-    private ElapsedTime time = new ElapsedTime();
-    private boolean firstLoop = true;//used to track if match has started
+    protected final HardwareMap hardwareMap;
+    private final Map<String, StatedSubsystem<?>> subsystems = new LinkedHashMap<>();
+    private boolean initialized = false;
 
-    /**
-     * Adds subsystem to tracking by the internal system. This means it will receive all events and updates as needed.
-     * It also will register the subsystem as the drive system if it uses that template. By default, the last subsystem added
-     * that extends {@link DriveSystemBase} is used as the drive system.
-     *
-     * @param sub the subsystem to add to the robot
-     */
-    protected void addSubSystem(SubSystemBase sub) {
-        String subID = sub.ID().equals("") ? sub.getClass().getSimpleName() : sub.ID();
-        //if the ID class hasn't been overridden, then use class name, else use the ID
-        subSystems.put(subID, sub);
-
-        if (sub instanceof DriveSystemBase) {
-            driveSystem = subID;
-        }
-    }
-
-    public Collection<SubSystemBase> getSubSystems() {
-        return subSystems.values();
-    }
-
-    /**
-     * Gets subsystem by name (This could be the class name or the overridden value of {@link SubSystemBase#ID()})
-     *
-     * @param name name to find
-     * @return the subsystem
-     */
-    public SubSystemBase getSubSystem(String name) {
-        return subSystems.get(name);
-    }
-
-    /**
-     * @return the subsystem the implements {@link DriveSystemBase} for use in driving the robot
-     */
-    public DriveSystemBase getDriveSystem() {
-        if (!driveSystem.isEmpty()) {
-            return (DriveSystemBase) subSystems.get(driveSystem);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * @return the subsystem the implements {@link DriveSystemBase} for use in driving the robot
-     */
-    public SidedDriveSystemBase getSidedDriveSystem() {
-        if (!driveSystem.isEmpty() && subSystems.get(driveSystem) instanceof SidedDriveSystemBase) {
-            return (SidedDriveSystemBase) subSystems.get(driveSystem);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * registers all of the subsystems and prepares the robot
-     *
-     * @param hardwareMap the hardware map from FTC SDK
-     * @return if there were no errors when initializing robot
-     */
-    public boolean init(HardwareMap hardwareMap) {
-        boolean noErrors = true;
-        for (SubSystemBase s : subSystems.values()) {
-            s.init(hardwareMap);//init each system
-
-            if (!s.isFunctioning() || !s.isInitialized()) {//insure all systems are ready to go
-                noErrors = false;
-            }
-        }
-
+    protected Robot(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
-        return noErrors;
     }
 
     /**
-     * Called to stop all subsystems
+     * Adds a subsystem to this robot.
      */
-    public void stop() {
-        for (SubSystemBase s :
-                subSystems.values()) {
-            s.stop();
+    protected final void registerSubsystem(String name, StatedSubsystem<?> subsystem) {
+        if (initialized) {
+            throw new IllegalStateException("Cannot add subsystems after robot initialization.");
+        }
+
+        if (subsystems.containsKey(name)) {
+            throw new IllegalArgumentException("Subsystem already registered with name: " + name);
+        }
+
+        subsystems.put(name, subsystem);
+    }
+
+    /**
+     * Initializes all subsystems.
+     */
+    public final void init() {
+        onInit();
+
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.init(hardwareMap);
+        }
+
+        initialized = true;
+    }
+
+    /**
+     * Subclasses should override this method to register their subsystems.
+     * This method is called during the robot's initialization phase.
+     */
+    public abstract void onInit();
+
+    /**
+     * Stops all subsystems.
+     */
+    public final void stop() {
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.stop();
         }
     }
 
     /**
-     * Tick method that should be called in the tick method of {@link com.qualcomm.robotcore.eventloop.opmode.OpMode}
-     * to insure all submodules have a chance to update and get info from sensors and motors
-     * <p>
-     * It may incur a slight performance disadvantage but shouldn't be too impacting
+     * Updates all subsystems (read phase).
      */
-    public void tick() {
-        //start time keeping
-        if (firstLoop) {
-            firstLoop = false;
-            startTime();//start time keeping
+    public final void update() {
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.update();
         }
-        for (SubSystemBase s :
-                subSystems.values()) {
-            s.tick();
-        }
-    }
-
-    private void startTime() {
-        time.startTime();
-    }
-
-    protected void resetTime() {
-        time.reset();
     }
 
     /**
-     * @return returns time since first call of {@code tick()} method for this robot
+     * Plans all subsystems (plan phase).
      */
-    public long getTimeMilliseconds() {
-        return (long) time.milliseconds();
+    public final void plan() {
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.plan();
+        }
+    }
+
+    /**
+     * Executes all subsystems (execute phase).
+     */
+    public final void execute() {
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.execute();
+        }
+    }
+
+    /**
+     * Runs one full robot lifecycle tick:
+     * 1. read all
+     * 2. plan all
+     * 3. execute all
+     */
+    public final void tick() {
+        ensureInitialized();
+
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.update();
+        }
+
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.plan();
+        }
+
+        for (StatedSubsystem<?> subsystem : subsystems.values()) {
+            subsystem.execute();
+        }
+    }
+
+    /**
+     * @return an unmodifiable collection of all registered subsystems.
+     */
+    public final Collection<StatedSubsystem<?>> getSubsystems() {
+        return subsystems.values();
+    }
+
+    /**
+     * Gets a registered subsystem by name.
+     *
+     * @param name the name of the subsystem to retrieve
+     * @return the subsystem with the given name, or null if no such subsystem exists
+     */
+    public final StatedSubsystem<?> getSubsystem(String name) {
+        return subsystems.get(name);
+    }
+
+    /**
+     * @return true if the robot has been initialized, false otherwise
+     */
+    public final boolean isInitialized() {
+        return initialized;
+    }
+
+    /**
+     * Ensures that the robot has been initialized before allowing subsystem operations.
+     * Throws an IllegalStateException if the robot is not initialized.
+     */
+    private void ensureInitialized() {
+        if (!initialized) {
+            throw new IllegalStateException("Robot has not been initialized.");
+        }
     }
 }
